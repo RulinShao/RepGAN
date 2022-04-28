@@ -90,6 +90,7 @@ def reprogramming(
 
             # Real input to D
             real_images = real_images.cuda()
+            real_images = img_map_D(real_images)
             real_logits = D(real_images, c)
 
             optimizer_mapG.zero_grad()
