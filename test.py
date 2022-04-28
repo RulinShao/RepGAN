@@ -91,10 +91,14 @@ def reprogramming(
             # Real input to D
             real_images = real_images.cuda()
             real_logits = D(real_images, c)
+
+            optimizer_mapG.zero_grad()
             
             # Gmain: Maximize logits for generated images.
             loss_G = torch.nn.functional.softplus(-gen_logits).mean() # -log(sigmoid(gen_logits))
             loss_G.backward(retain_graph=True)
+
+            optimizer_mapD.zero_grad()
 
             # Dmain: Minimize logits for generated images.
             loss_Dgen = torch.nn.functional.softplus(gen_logits_).mean() # -log(1 - sigmoid(gen_logits))
@@ -103,8 +107,6 @@ def reprogramming(
             loss_D = loss_Dgen + loss_Dreal
             loss_D.backward()
 
-            optimizer_mapG.zero_grad()
-            optimizer_mapD.zero_grad()
             optimizer_mapG.step()
             optimizer_mapD.step()
         
