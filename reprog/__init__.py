@@ -1,3 +1,3 @@
-from .img_map import EncDec
-from .hidden_map import HiddenMap
+from .img_map import *
+from .hidden_map import *
 from .data_loader import *
