@@ -5,10 +5,10 @@ Pass pre-trained pikle name by `--network_pkl`, run `test.py` for reprogramming.
 Find enc-dec modules for reprogramming in `./reprog/`.
 
 ```*bash
-# Example
-python test.py --network_pkl=https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada-pytorch/pretrained/metfaces.pkl
-# OR
-./run_test.sh
+# Example: run with 1024*1024 image size (load metfaces pikle)
+python test.py --network_pkl $METFACES --batch_size 4 --output output/metfaces/ --image_size 1024
+# Example: run with 512*512 image size (load afhqcat pikle)
+python test.py --network_pkl $AFHQCAT --batch_size 4 --output output/afhqcat/ --image_size 512
 ```
 
 See the original `README.md` below for more information of different pre-trained models.
