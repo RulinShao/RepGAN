@@ -66,8 +66,8 @@ def reprogramming(
     # Initialize mapping modules
     z_dim = 512  # z_dim = G.z_dim
     z_map = HiddenMap(z_dim).cuda()
-    img_map_G = EncDec_1024_1024(conv_dim=8, repeat_num=1).cuda()
-    img_map_D = EncDec_1024_1024(conv_dim=8, repeat_num=1).cuda()
+    img_map_G = EncDec(conv_dim=8, repeat_num=1).cuda()
+    img_map_D = EncDec(conv_dim=8, repeat_num=1).cuda()
 
     # Optimiers for mappings
     optimizer_mapG = optim.SGD(list(z_map.parameters()) + list(img_map_G.parameters()), lr=args.lr, momentum=0.9)
