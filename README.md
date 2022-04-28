@@ -1,3 +1,19 @@
+# Note for 10708 Project
+
+Pass pre-trained pikle name by `--network_pkl`, run `test.py` for reprogramming.
+
+Find enc-dec modules for reprogramming in `./reprog/`.
+
+```*bash
+# Example
+python test.py --network=https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada-pytorch/pretrained/metfaces.pkl
+```
+
+See the original `README.md` below for more information of different pre-trained models.
+
+
+
+**We develop our project from the StyleGAN2-ADA code base. Below is the original README.md.**
 ## StyleGAN2-ADA &mdash; Official PyTorch implementation
 
 ![Teaser image](./docs/stylegan2-ada-teaser-1024x252.png)
