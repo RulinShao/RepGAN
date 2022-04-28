@@ -5,7 +5,6 @@ from tqdm import tqdm
 from datetime import datetime
 
 import argparse
-from numpy import real
 import torch
 import torch.optim as optim
 import dnnlib
@@ -118,7 +117,7 @@ def reprogramming(
 
 
 def save_ckpt(args, z_map, img_map_G, img_map_D, optimizer_mapD, optimizer_mapG):
-    PATH = os.path.join(output_dir, '/ckpt.pt')
+    PATH = os.path.join(output_dir, 'ckpt.pt')
     torch.save({
             'z_map': z_map.state_dict(),
             'img_map_G': img_map_G.state_dict(),

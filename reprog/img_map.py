@@ -61,10 +61,10 @@ class EncDec_1024_1024(nn.Module):
 
 
 
-class EncDec_1024_64(nn.Module):
+class EncDec_512_512(nn.Module):
     """Adapted from Generator network."""
     def __init__(self, conv_dim=64, c_dim=3, repeat_num=6):
-        super(EncDec_1024_64, self).__init__()
+        super(EncDec_512_512, self).__init__()
 
         layers = []
         layers.append(nn.Conv2d(c_dim, conv_dim, kernel_size=7, stride=1, padding=3, bias=False))
