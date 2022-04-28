@@ -6,7 +6,9 @@ Find enc-dec modules for reprogramming in `./reprog/`.
 
 ```*bash
 # Example
-python test.py --network=https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada-pytorch/pretrained/metfaces.pkl
+python test.py --network_pkl=https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada-pytorch/pretrained/metfaces.pkl
+# OR
+./run_test.sh
 ```
 
 See the original `README.md` below for more information of different pre-trained models.
