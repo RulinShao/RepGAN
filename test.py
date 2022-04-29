@@ -21,6 +21,7 @@ parser.add_argument('--epochs', default=1000, type=int)
 parser.add_argument('--log_interval', default=1)
 parser.add_argument('--image_size', default=1024, type=int)
 parser.add_argument('--output', default='./output/', type=str)
+parser.add_argument('--train_D_interval', default=1, type=int)
 
 args = parser.parse_args()
 
@@ -28,8 +29,6 @@ args = parser.parse_args()
 output_dir = os.path.join(args.output, datetime.now().strftime('%Y-%m-%d'))
 if not os.path.isdir(output_dir):
     os.makedirs(output_dir)
-# logpath = os.path.join(output_dir, 'logs.log')
-# open(logpath, 'a').close()
 
 logging.basicConfig(
     filename=os.path.join(output_dir, 'logs.log'),
@@ -82,37 +81,45 @@ def reprogramming(
             out_G = G(z, c)  # NCHW, float32, dynamic range [-1, +1]
             out_G = img_map_G(out_G)
 
-            # Fake input to D
+            # Fake input to D (with gradient to G)
             fake_images = img_map_D(out_G)
-            fake_images_ = img_map_D(out_G.detach())
             gen_logits = D(fake_images, c)
-            gen_logits_ = D(fake_images_, c)
-
-            # Real input to D
-            real_images = real_images.cuda()
-            real_images = img_map_D(real_images)
-            real_logits = D(real_images, c)
-
+            
             optimizer_mapG.zero_grad()
             
             # Gmain: Maximize logits for generated images.
             loss_G = torch.nn.functional.softplus(-gen_logits).mean() # -log(sigmoid(gen_logits))
             loss_G.backward(retain_graph=True)
 
-            optimizer_mapD.zero_grad()
-
-            # Dmain: Minimize logits for generated images.
-            loss_Dgen = torch.nn.functional.softplus(gen_logits_).mean() # -log(1 - sigmoid(gen_logits))
-            # Dmain: Maximize logits for real images.
-            loss_Dreal = torch.nn.functional.softplus(-real_logits).mean() # -log(sigmoid(real_logits))
-            loss_D = loss_Dgen + loss_Dreal
-            loss_D.backward()
-
             optimizer_mapG.step()
-            optimizer_mapD.step()
+
+            if epoch % args.train_D_interval == 0:
+                # Fake input to D (without gradient to G)
+                fake_images_ = img_map_D(out_G.detach())
+                gen_logits_ = D(fake_images_, c)
+
+                # Real input to D
+                real_images = real_images.cuda()
+                real_images = img_map_D(real_images)
+                real_logits = D(real_images, c)
+
+                optimizer_mapD.zero_grad()
+
+                # Dmain: Minimize logits for generated images.
+                loss_Dgen = torch.nn.functional.softplus(gen_logits_).mean() # -log(1 - sigmoid(gen_logits))
+                # Dmain: Maximize logits for real images.
+                loss_Dreal = torch.nn.functional.softplus(-real_logits).mean() # -log(sigmoid(real_logits))
+                loss_D = loss_Dgen + loss_Dreal
+                loss_D.backward()
+
+                optimizer_mapD.step()
+
         
         if epoch % args.log_interval == 0:
-            logging.info(f"Epoch:{epoch}, Loss_G:{loss_G:.4f}, Loss_D:{loss_D:.4f}, loss_Dreal:{loss_Dreal:.4f}, loss_Dgen:{loss_Dgen:.4f}")
+            if epoch % args.train_D_interval == 0:
+                logging.info(f"Epoch:{epoch}, Loss_G:{loss_G:.4f}, Loss_D:{loss_D:.4f}, loss_Dreal:{loss_Dreal:.4f}, loss_Dgen:{loss_Dgen:.4f}")
+            else:
+                logging.info(f"Epoch:{epoch}, Loss_G:{loss_G:.4f}")
             save_ckpt(args, z_map, img_map_G, img_map_D, optimizer_mapD, optimizer_mapG)
     
     return z_map, img_map_G, img_map_D, optimizer_mapD, optimizer_mapG
