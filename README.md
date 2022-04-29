@@ -11,6 +11,11 @@ python test.py --network_pkl $METFACES --batch_size 4 --output output/metfaces/ 
 python test.py --network_pkl $AFHQCAT --batch_size 4 --output output/afhqcat/ --image_size 512
 ```
 
+To test the reprogrammed model by generating image samples, run:
+```*bash
+python my_generate.py --network_pkl $METFACES --ckpt_path $CKPT_PATH --out_dir ./out
+```
+
 See the original `README.md` below for more information of different pre-trained models.
 
 
