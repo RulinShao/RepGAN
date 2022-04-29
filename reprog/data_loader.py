@@ -11,7 +11,7 @@ import seaborn as sns
 
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-POKEMON_NORM = norm=((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+POKEMON_NORM = ((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 
 def load_pokemon(batch_size, img_size=256):
     path = 'data/pokemon'
@@ -37,8 +37,9 @@ def unnorm(images, means, stds):
 def show_batch(images, norm, batch_size):
     fig, ax = plt.subplots(figsize=(15, 15))
     ax.set_xticks([]); ax.set_yticks([])
-    unnorm_images = unnorm(images, *norm)
-    ax.imshow(make_grid(unnorm_images[:batch_size], nrow=8).permute(1, 2, 0).clamp(0,1))
+    if norm is not None:
+        images = unnorm(images, *norm)
+    ax.imshow(make_grid(images[:batch_size], nrow=8).permute(1, 2, 0).clamp(0,1))
     fig.savefig('pokemon.png')
 
 
