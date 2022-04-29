@@ -16,7 +16,7 @@ from reprog import *
 parser = argparse.ArgumentParser(description='Reprgramming for GAN')
 parser.add_argument('--network_pkl', help='Pre-trained Network pickle filename', required=True)
 parser.add_argument('--batch_size', default=1, type=int)
-parser.add_argument('--lr', default=0.01, type=float)
+parser.add_argument('--lr', default=0.002, type=float)
 parser.add_argument('--epochs', default=1000, type=int)
 parser.add_argument('--log_interval', default=1)
 parser.add_argument('--image_size', default=1024, type=int)
@@ -25,7 +25,7 @@ parser.add_argument('--output', default='./output/', type=str)
 args = parser.parse_args()
 
 
-output_dir = os.path.join(args.output, datetime.now().strftime('%Y-%m-%d'))
+output_dir = args.output
 if not os.path.isdir(output_dir):
     os.makedirs(output_dir)
 # logpath = os.path.join(output_dir, 'logs.log')
@@ -60,8 +60,8 @@ def reprogramming(
     # Load pre-trained models
     G = load_pretrained(args.network_pkl, 'G_ema').cuda()
     D = load_pretrained(args.network_pkl, 'D').cuda()
-    G.requires_grad = False
-    D.requires_grad = False
+    G.requires_grad_(False)
+    D.requires_grad_(False)
 
     # Initialize mapping modules
     z_map = HiddenMap(G.z_dim).cuda()
@@ -69,11 +69,13 @@ def reprogramming(
     img_map_D = EncDec(conv_dim=8, repeat_num=1).cuda()
 
     # Optimiers for mappings
-    optimizer_mapG = optim.SGD(list(z_map.parameters()) + list(img_map_G.parameters()), lr=args.lr, momentum=0.9)
-    optimizer_mapD = optim.SGD(img_map_D.parameters(), lr=args.lr, momentum=0.9)
+    # optimizer_mapG = optim.SGD(list(z_map.parameters()) + list(img_map_G.parameters()), lr=args.lr, momentum=0.9)
+    # optimizer_mapD = optim.SGD(img_map_D.parameters(), lr=args.lr, momentum=0.9)
+    optimizer_mapG = optim.Adam(list(z_map.parameters()) + list(img_map_G.parameters()), lr=args.lr, betas=[0, 0.99])
+    optimizer_mapD = optim.Adam(img_map_D.parameters(), lr=args.lr, betas=[0, 0.99])
 
     for epoch in range(args.epochs):
-        for real_images, _ in target_loader:
+        for i, (real_images, _) in enumerate(target_loader):
 
             # Generate images
             z = torch.randn([args.batch_size, G.z_dim]).cuda()  # latent codes
