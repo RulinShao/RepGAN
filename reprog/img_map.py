@@ -21,12 +21,13 @@ class ResidualBlock(nn.Module):
 
 class EncDec(nn.Module):
     """Adapted from Generator network.
-    Input size: 1024 * 1024
-    Output size: 1024 * 1024
+    Input size: 1024
+    Output size: 1024 * 2^res_diff
     """
 
-    def __init__(self, conv_dim=64, c_dim=3, repeat_num=6):
+    def __init__(self, conv_dim=64, c_dim=3, repeat_num=6, res_diff=0):
         super(EncDec, self).__init__()
+        assert -4 <= res_diff <= 4
 
         layers = []
         layers.append(nn.Conv2d(c_dim, conv_dim, kernel_size=7, stride=1, padding=3, bias=False))
@@ -36,7 +37,14 @@ class EncDec(nn.Module):
         # Down-sampling layers.
         curr_dim = conv_dim
         for i in range(2):
-            layers.append(nn.Conv2d(curr_dim, curr_dim*2, kernel_size=4, stride=2, padding=1, bias=False))
+            # compute stride and padding based on required resolution
+            if res_diff <= -i - 1:
+                k, s, p = 4, 4, 0
+            elif res_diff >= 4 - i:
+                k, s, p = 3, 1, 1
+            else:
+                k, s, p = 4, 2, 1
+            layers.append(nn.Conv2d(curr_dim, curr_dim*2, kernel_size=k, stride=s, padding=p, bias=False))
             layers.append(nn.InstanceNorm2d(curr_dim*2, affine=True, track_running_stats=True))
             layers.append(nn.ReLU(inplace=True))
             curr_dim = curr_dim * 2
@@ -47,7 +55,14 @@ class EncDec(nn.Module):
 
         # Up-sampling layers.
         for i in range(2):
-            layers.append(nn.ConvTranspose2d(curr_dim, curr_dim//2, kernel_size=4, stride=2, padding=1, bias=False))
+            # compute stride and padding based on required resolution
+            if res_diff <= -i - 3:
+                k, s, p = 3, 1, 1
+            elif res_diff >= 2 - i:
+                k, s, p = 4, 4, 0
+            else:
+                k, s, p = 4, 2, 1
+            layers.append(nn.ConvTranspose2d(curr_dim, curr_dim//2, kernel_size=k, stride=s, padding=p, bias=False))
             layers.append(nn.InstanceNorm2d(curr_dim//2, affine=True, track_running_stats=True))
             layers.append(nn.ReLU(inplace=True))
             curr_dim = curr_dim // 2
@@ -67,3 +82,4 @@ def count_parameters(model):
 if __name__ == '__main__':
     model2 = EncDec(conv_dim=8, repeat_num=1)
     print(count_parameters(model2))
+

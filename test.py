@@ -1,27 +1,30 @@
+import argparse
+import math
 import pickle
 from typing import List, Optional
 import logging
-from tqdm import tqdm
 from datetime import datetime
 
-import argparse
+from tqdm import tqdm
 import torch
 import torch.optim as optim
+
 import dnnlib
-
 import legacy
-
 from reprog import *
 
 parser = argparse.ArgumentParser(description='Reprgramming for GAN')
 parser.add_argument('--network_pkl', help='Pre-trained Network pickle filename', required=True)
+parser.add_argument('--network_res', default=1024, type=int)
 parser.add_argument('--batch_size', default=1, type=int)
 parser.add_argument('--lr', default=0.002, type=float)
 parser.add_argument('--epochs', default=1000, type=int)
 parser.add_argument('--log_interval', default=1)
+parser.add_argument('--save_interval', default=10)
 parser.add_argument('--image_size', default=1024, type=int)
 parser.add_argument('--output', default='./output/', type=str)
 parser.add_argument('--train_D_interval', default=1, type=int)
+parser.add_argument('--data_path', default='data/pokemon', type=str)
 
 args = parser.parse_args()
 
@@ -54,7 +57,7 @@ def reprogramming(
     args
 ):
     # Load real images from target dataset
-    target_loader = load_pokemon(args.batch_size, args.image_size)
+    target_loader = load_pokemon(args.batch_size, args.image_size, args.data_path)
 
     # Load pre-trained models
     G = load_pretrained(args.network_pkl, 'G_ema').cuda()
@@ -63,9 +66,10 @@ def reprogramming(
     D.requires_grad_(False)
 
     # Initialize mapping modules
+    res_diff = round(math.log(args.image_size / args.network_res) / math.log(2))
     z_map = HiddenMap(G.z_dim).cuda()
-    img_map_G = EncDec(conv_dim=8, repeat_num=1).cuda()
-    img_map_D = EncDec(conv_dim=8, repeat_num=1).cuda()
+    img_map_G = EncDec(conv_dim=8, repeat_num=1, res_diff=res_diff).cuda()
+    img_map_D = EncDec(conv_dim=8, repeat_num=1, res_diff=-res_diff).cuda()
 
     # Optimiers for mappings
     # optimizer_mapG = optim.SGD(list(z_map.parameters()) + list(img_map_G.parameters()), lr=args.lr, momentum=0.9)
@@ -122,13 +126,14 @@ def reprogramming(
                 logging.info(f"Epoch:{epoch}, Loss_G:{loss_G:.4f}, Loss_D:{loss_D:.4f}, loss_Dreal:{loss_Dreal:.4f}, loss_Dgen:{loss_Dgen:.4f}")
             else:
                 logging.info(f"Epoch:{epoch}, Loss_G:{loss_G:.4f}")
-            save_ckpt(args, z_map, img_map_G, img_map_D, optimizer_mapD, optimizer_mapG)
+        if (epoch + 1) % args.save_interval == 0:
+            save_ckpt(args, epoch + 1, z_map, img_map_G, img_map_D, optimizer_mapD, optimizer_mapG)
     
     return z_map, img_map_G, img_map_D, optimizer_mapD, optimizer_mapG
 
 
-def save_ckpt(args, z_map, img_map_G, img_map_D, optimizer_mapD, optimizer_mapG):
-    PATH = os.path.join(output_dir, 'ckpt.pt')
+def save_ckpt(args, epoch, z_map, img_map_G, img_map_D, optimizer_mapD, optimizer_mapG):
+    PATH = os.path.join(output_dir, f'ckpt_{epoch}.pt')
     torch.save({
             'z_map': z_map.state_dict(),
             'img_map_G': img_map_G.state_dict(),

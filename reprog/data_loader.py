@@ -13,8 +13,7 @@ import seaborn as sns
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 POKEMON_NORM = ((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 
-def load_pokemon(batch_size, img_size=256):
-    path = 'data/pokemon'
+def load_pokemon(batch_size, img_size=256, path='data/pokemon'):
     assert os.path.exists(path)
     norm = POKEMON_NORM
     transf = transforms.Compose([

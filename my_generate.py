@@ -25,7 +25,7 @@ args = parser.parse_args()
 def load_model(args):
     G = load_pretrained(args.network_pkl, 'G_ema')
     z_map = HiddenMap(G.z_dim).cuda()
-    img_map_G = EncDec(conv_dim=8, repeat_num=1).cuda()
+    img_map_G = EncDec(conv_dim=8, repeat_num=1, res_diff=-2).cuda()
     ckpt = torch.load(args.ckpt_path)
     z_map.load_state_dict(ckpt['z_map'])
     img_map_G.load_state_dict(ckpt['img_map_G'])
